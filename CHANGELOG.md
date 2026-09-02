@@ -29,3 +29,10 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   user has disabled. 12 further Vitest cases cover the determinism guarantee across separate
   pipeline runs, the append-only mapping lifetime, and a captureGroup rule leaving its
   surrounding path structure intact.
+- Re-hydration: `rehydrate.js` restores every known `{{TYPE_N}}` token in a model's reply,
+  tolerating stray whitespace or backticks a model adds around a placeholder, and reports any
+  `{{…}}`-shaped token it doesn't recognise instead of silently leaving a partial restore.
+  Added `test/fixtures/mixed-log.txt`, a fabricated deploy log spanning most rule categories,
+  and a full round-trip test: redact it, rehydrate the result, assert the output is the
+  original byte-for-byte. The engine (stages 2-4) is now complete and self-verifying end to
+  end; the UI is next.

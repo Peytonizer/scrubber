@@ -1,0 +1,7 @@
+2026-01-14T09:12:03Z deploy started by user: alice
+2026-01-14T09:12:04Z assuming role arn:aws:iam::123456789012:role/example-deploy-role
+2026-01-14T09:12:05Z uploading build to s3://example-bucket/releases/v1.2.3.tar.gz
+2026-01-14T09:12:07Z health check to 203.0.113.7 succeeded
+2026-01-14T09:12:08Z notifying alice@example.com of deploy status
+2026-01-14T09:12:09Z auth token: ghp_1234567890abcdefghijklmnopqrstuvwxyz
+2026-01-14T09:12:10Z deploy finished, home dir was /home/alice/.deploy
