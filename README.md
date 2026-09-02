@@ -68,7 +68,11 @@ npm run build:single   # one self-contained file: dist-single/scrubber.html
 ```
 
 The single-file build has no external assets at all — save it anywhere and open it straight
-from your filesystem, no server and no network needed.
+from your filesystem, no server and no network needed. Its CSP adds `'unsafe-inline'` to
+`script-src` and `style-src`, and `data:` to `font-src`, because everything (JS, CSS, fonts,
+even the favicon) is inlined directly into the one HTML file rather than loaded as a separate
+same-origin resource. `connect-src 'none'` — the directive that actually enforces the
+no-network guarantee — is exactly the same in both builds.
 
 ## Design
 

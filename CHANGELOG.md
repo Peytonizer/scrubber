@@ -76,3 +76,19 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   alone, all three keyboard shortcuts, and the full purge confirm/cancel flow. No console
   errors. Every v1 feature in SPEC.md's list is now implemented; single-file build and
   deployment (stages 8-9) are what's left.
+- Single-file build: `vite.config.singlefile.js` (via `vite-plugin-singlefile`) produces
+  `dist-single/scrubber.html` — one file, nothing else, that runs with no server. Two plugins
+  handle what the singlefile plugin doesn't: `relaxCspForSingleFile` adds `'unsafe-inline'` to
+  `script-src` (an inlined `<script>` isn't covered by `'self'`, which only allows a
+  same-origin *external* file) and `data:` to `font-src` (the fonts are now inlined as `data:`
+  URIs too); `inlineFavicon` replaces the `public/favicon.svg` reference with the file's own
+  content as a data URI, and `publicDir: false` stops that file being copied in as well, so
+  the build is genuinely one file rather than one file plus an orphaned favicon.
+  `connect-src 'none'` is untouched in both builds — see the README's new note on this.
+  `npm run build:single` builds then renames Vite's `index.html` output to `scrubber.html`
+  (the CLI supplies the rename; there's no built-in Vite option for it).
+  Verified by serving the built file (the browser automation tool can't drive a `file://` URL
+  directly, so this stands in for it — the CSP directives themselves don't behave differently
+  by scheme) and confirming zero non-inlined network requests, correct font rendering, and a
+  full working de-identify/re-hydrate round trip with the mapping table, stats and drawer all
+  functioning identically to the normal build. No console errors.
