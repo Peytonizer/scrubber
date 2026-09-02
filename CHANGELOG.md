@@ -14,3 +14,12 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   tokens. The CSP `<meta>` tag (`connect-src 'none'`) is in `index.html` from the first
   commit, and the header/footer chrome (razor mark, wordmark, status-dot grid, footer line)
   is built and verified against a production build with no console errors or CSP violations.
+- Detection engine: `rules.js` (every SPEC.md rule across the five categories, plus
+  runtime-built custom-term rules), `heuristics.js` (IPv4/IPv6 shape validation, Luhn, Shannon
+  entropy), `detect.js` and `overlap.js`. 103 Vitest cases, including a positive and negative
+  fixture per rule and a test proving an AWS ARN wins the span over the bare account ID inside
+  it. Two of SPEC.md's given regexes needed a small, commented correction once fixtures
+  exercised them: `credit-card` was sweeping a trailing space into the match, and `ipv6`'s
+  attempt to spell out the `::`-compression grammar directly matched only the tail of a
+  compressed address — both are now a permissive pattern plus a real validator, as the network
+  rules table already intended for `ipv4`.
