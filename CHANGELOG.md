@@ -23,3 +23,9 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   attempt to spell out the `::`-compression grammar directly matched only the tail of a
   compressed address — both are now a permissive pattern plus a real validator, as the network
   rules table already intended for `ipv4`.
+- Tokenising and redaction: `tokenise.js` allocates `{{TYPE_N}}` tokens and reuses them for
+  values already seen, returning a new session slice rather than mutating the one it's given;
+  `redact.js` splices resolved matches into the text back-to-front, skipping any entry the
+  user has disabled. 12 further Vitest cases cover the determinism guarantee across separate
+  pipeline runs, the append-only mapping lifetime, and a captureGroup rule leaving its
+  surrounding path structure intact.
