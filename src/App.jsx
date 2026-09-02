@@ -3,6 +3,7 @@ import Footer from './components/Footer'
 import Header from './components/Header'
 import InputPane from './components/InputPane'
 import OutputPane from './components/OutputPane'
+import RuleDrawer from './components/RuleDrawer'
 import { useSession } from './state/useSession.js'
 
 const PANE_LABELS = {
@@ -24,6 +25,7 @@ function App() {
   } = useSession()
 
   const [autoDetectDismissed, setAutoDetectDismissed] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const labels = PANE_LABELS[state.mode]
 
@@ -46,6 +48,8 @@ function App() {
         mode={state.mode}
         onModeChange={(mode) => dispatch({ type: 'SET_MODE', mode })}
         mappingNonEmpty={state.mapping.size > 0}
+        drawerOpen={drawerOpen}
+        onToggleDrawer={() => setDrawerOpen((open) => !open)}
       />
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 px-8 py-8 max-[900px]:px-8 min-[901px]:px-[72px]">
@@ -98,6 +102,16 @@ function App() {
             overThreshold={state.mode === 'deidentify' && overThreshold}
             onScrub={requestScrub}
           />
+          {drawerOpen && (
+            <RuleDrawer
+              categoryToggles={state.categoryToggles}
+              ruleToggles={state.ruleToggles}
+              customTerms={state.customTerms}
+              onToggleCategory={(category) => dispatch({ type: 'TOGGLE_CATEGORY', category })}
+              onToggleRule={(id) => dispatch({ type: 'TOGGLE_RULE', id })}
+              onSetCustomTerms={(terms) => dispatch({ type: 'SET_CUSTOM_TERMS', terms })}
+            />
+          )}
         </div>
       </main>
 

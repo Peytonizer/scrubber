@@ -48,3 +48,10 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   toggle — no console errors. One bug found and fixed by that manual testing: the round-trip
   check was comparing against unrelated `{{…}}`-shaped text already sitting in the input when
   nothing was actually redacted that run, so it's now gated on `matches.length > 0`.
+- Rule drawer: a collapsible right-hand sidebar (toggled from a new header button) listing
+  every rule under its category, each with its own checkbox; a category checkbox gates every
+  rule beneath it regardless of that rule's own toggle, and a `noisy` badge marks rules that
+  may over-match. The free-text custom-terms field adds a term on Enter/comma/blur as a
+  removable tag, each one becoming a highest-priority rule at runtime. Manually verified: a
+  category toggle stops its rules from matching without touching anything else, and a custom
+  term redacts correctly, mid-sentence, on the next debounce tick — no console errors.
