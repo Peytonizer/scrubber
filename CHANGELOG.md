@@ -7,3 +7,6 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
 
 - Project scaffolding: specification, backlog, README, changelog and `.gitignore`. No
   application code yet.
+- Adopted the noradz "Signal" theme (dark base, red accent, Space Grotesk + IBM Plex Mono),
+  with fonts self-hosted rather than CDN-loaded so the no-network guarantee still holds.
+- Added an MIT licence.
