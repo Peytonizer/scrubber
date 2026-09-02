@@ -9,8 +9,16 @@
  * in `session.mapping` is copied forward untouched if its value doesn't appear in `matches`
  * this run — the mapping lifetime is append-only (SPEC.md), so a value dropping out of the
  * current input must not lose its entry.
+ *
+ * `delimiter` picks the brace style for any *newly* allocated token this run: `'curly'` gives
+ * `{{TYPE_N}}` (the default), `'angle'` gives `<<TYPE_N>>` — the collision escape hatch from
+ * SPEC.md's decisions table, offered when the input already contains `{{`. Entries allocated
+ * earlier under the other style are left exactly as they are; switching delimiter mid-session
+ * doesn't rewrite tokens already handed out, since that would break re-hydration of anything
+ * already copied out of the app.
  */
-export function tokenise(matches, session) {
+export function tokenise(matches, session, delimiter = 'curly') {
+  const [open, close] = delimiter === 'angle' ? ['<<', '>>'] : ['{{', '}}']
   const mapping = new Map(session.mapping)
   const reverse = new Map(session.reverse)
   const counters = { ...session.counters }
@@ -37,7 +45,7 @@ export function tokenise(matches, session) {
     counters[match.tokenType] = n
     const entry = {
       original: value,
-      token: `{{${match.tokenType}_${n}}}`,
+      token: `${open}${match.tokenType}_${n}${close}`,
       tokenType: match.tokenType,
       ruleId: match.ruleId,
       count,

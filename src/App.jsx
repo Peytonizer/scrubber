@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Footer from './components/Footer'
 import Header from './components/Header'
 import InputPane from './components/InputPane'
+import MappingTable from './components/MappingTable'
 import OutputPane from './components/OutputPane'
 import RuleDrawer from './components/RuleDrawer'
+import StatsBadges from './components/StatsBadges'
 import { useSession } from './state/useSession.js'
 
 const PANE_LABELS = {
@@ -22,9 +24,11 @@ function App() {
     unknownTokens,
     roundTripFailed,
     looksLikeModelOutput,
+    bracesCollision,
   } = useSession()
 
   const [autoDetectDismissed, setAutoDetectDismissed] = useState(false)
+  const [collisionDismissed, setCollisionDismissed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const labels = PANE_LABELS[state.mode]
@@ -41,15 +45,39 @@ function App() {
   }
 
   const showAutoDetect = looksLikeModelOutput && !autoDetectDismissed
+  const showCollisionOffer = bracesCollision && !collisionDismissed
+
+  // Keyboard shortcuts (SPEC.md feature 16): Cmd/Ctrl+Enter copies the output, Cmd/Ctrl+K
+  // toggles mode, Cmd/Ctrl+B toggles the rule drawer. A window-level listener sees these
+  // regardless of which pane has focus — keydown bubbles there from anywhere on the page.
+  useEffect(() => {
+    function onKeyDown(e) {
+      const mod = e.metaKey || e.ctrlKey
+      if (!mod) return
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        if (output) navigator.clipboard.writeText(output).catch(() => {})
+      } else if (e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        dispatch({ type: 'SET_MODE', mode: state.mode === 'deidentify' ? 'rehydrate' : 'deidentify' })
+      } else if (e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        setDrawerOpen((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [output, state.mode, dispatch])
 
   return (
     <div className="flex min-h-svh flex-col">
       <Header
         mode={state.mode}
         onModeChange={(mode) => dispatch({ type: 'SET_MODE', mode })}
-        mappingNonEmpty={state.mapping.size > 0}
+        mappingSize={state.mapping.size}
         drawerOpen={drawerOpen}
         onToggleDrawer={() => setDrawerOpen((open) => !open)}
+        onPurge={() => dispatch({ type: 'PURGE' })}
       />
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 px-8 py-8 max-[900px]:px-8 min-[901px]:px-[72px]">
@@ -67,6 +95,31 @@ function App() {
               <button
                 type="button"
                 onClick={() => setAutoDetectDismissed(true)}
+                className="text-text-faint hover:text-text-muted"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showCollisionOffer && (
+          <div className="flex items-center justify-between gap-4 rounded border border-accent/40 bg-surface px-4 py-3 font-mono text-[12px] text-text-dim">
+            <span>
+              Input already contains <code>{'{{'}</code> — use <code>{'<< >>'}</code> tokens
+              instead so they stay distinguishable?
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'SET_DELIMITER', delimiter: 'angle' })}
+                className="rounded-[3px] bg-accent px-3 py-1 font-semibold text-bg hover:bg-accent-hover"
+              >
+                Switch
+              </button>
+              <button
+                type="button"
+                onClick={() => setCollisionDismissed(true)}
                 className="text-text-faint hover:text-text-muted"
               >
                 Dismiss
@@ -113,6 +166,18 @@ function App() {
             />
           )}
         </div>
+
+        <StatsBadges mapping={state.mapping} />
+
+        <MappingTable
+          mapping={state.mapping}
+          onToggleEnabled={(original, enabled) =>
+            dispatch({ type: 'SET_MAPPING_ENTRY', original, patch: { enabled } })
+          }
+          onRename={(original, open, name, close) =>
+            dispatch({ type: 'RENAME_TOKEN', original, open, name, close })
+          }
+        />
       </main>
 
       <Footer />

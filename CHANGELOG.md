@@ -55,3 +55,24 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   removable tag, each one becoming a highest-priority rule at runtime. Manually verified: a
   category toggle stops its rules from matching without touching anything else, and a custom
   term redacts correctly, mid-sentence, on the next debounce tick — no console errors.
+- Mapping inspector, stats, purge and keyboard shortcuts — the last of v1's UI. `MappingTable`
+  lists every entry with its category dot, a per-row enable checkbox, and a click-to-rename
+  token field that rejects a name colliding with another entry's token. `StatsBadges` counts
+  enabled entries per category. `PurgeButton` is a two-step inline confirmation naming exactly
+  what will be lost, replacing itself once the mapping is empty. `Cmd/Ctrl+Enter` copies the
+  output, `Cmd/Ctrl+K` toggles mode, `Cmd/Ctrl+B` toggles the drawer.
+  Also implemented the `{{` token-delimiter collision from SPEC.md's decisions table:
+  `tokenise.js` takes a `delimiter` param (`curly` or `angle`) and only affects tokens minted
+  from that point on, so a mid-session switch never rewrites a token already handed out;
+  `rehydrate.js` recognises both `{{TYPE_N}}` and `<<TYPE_N>>` without needing to know which
+  one is active.
+  `output` is now derived (`redact(matchedText, matches, mapping)`) rather than stored, so
+  toggling or renaming a mapping row updates the visible output instantly with no re-detect.
+  Manually stress-tested with 31 mapping rows (SPEC.md flagged the inspector's layout at that
+  scale as needing a check before committing to a design) — the plain scrolling table reads
+  fine at that size, so no virtualisation or pagination was needed. Also verified in-browser:
+  rename updates the output live and rejects a colliding name, disabling a row un-redacts it
+  live, the delimiter switch mints new tokens in the new style while leaving existing ones
+  alone, all three keyboard shortcuts, and the full purge confirm/cancel flow. No console
+  errors. Every v1 feature in SPEC.md's list is now implemented; single-file build and
+  deployment (stages 8-9) are what's left.

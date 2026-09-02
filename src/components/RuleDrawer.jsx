@@ -1,34 +1,12 @@
 import { useState } from 'react'
 import { rules } from '../engine/rules.js'
+import { CATEGORY_BORDER, CATEGORY_DOT, CATEGORY_LABEL } from './categoryStyles.js'
 
-const CATEGORY_ORDER = ['cloud', 'identity', 'network', 'secrets', 'pii']
+// The drawer only lists built-in rules — custom terms get their own field below, not a
+// category of static rules to toggle individually.
+const DRAWER_CATEGORIES = ['cloud', 'identity', 'network', 'secrets', 'pii']
 
-const CATEGORY_LABEL = {
-  cloud: 'Cloud',
-  identity: 'Identity',
-  network: 'Network',
-  secrets: 'Secrets',
-  pii: 'PII',
-}
-
-// Tailwind's build-time scanner needs each class name written out literally somewhere in the
-// source — `border-category-${category}` wouldn't be found. These lookup tables are that.
-const CATEGORY_DOT = {
-  cloud: 'bg-category-cloud',
-  identity: 'bg-category-identity',
-  network: 'bg-category-network',
-  secrets: 'bg-category-secrets',
-  pii: 'bg-category-pii',
-}
-const CATEGORY_BORDER = {
-  cloud: 'border-category-cloud',
-  identity: 'border-category-identity',
-  network: 'border-category-network',
-  secrets: 'border-category-secrets',
-  pii: 'border-category-pii',
-}
-
-const RULES_BY_CATEGORY = CATEGORY_ORDER.map((category) => ({
+const RULES_BY_CATEGORY = DRAWER_CATEGORIES.map((category) => ({
   category,
   rules: rules.filter((r) => r.category === category),
 }))

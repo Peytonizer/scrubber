@@ -15,9 +15,10 @@ export const LIVE_REDACTION_THRESHOLD_BYTES = 200 * 1024
 
 const CATEGORIES = ['cloud', 'identity', 'network', 'secrets', 'pii', 'custom']
 
-/** A `{{TYPE_N}}`-shaped token, used to notice when de-identify mode has been pasted the
- * output of an earlier re-hydrate — see the mode auto-detect feature in SPEC.md. */
-const TOKEN_PATTERN = /\{\{[A-Z0-9_]+\}\}/g
+/** Matches a token in either delimiter style tokenise.js can produce — used to notice when
+ * de-identify mode has been pasted the output of an earlier re-hydrate (the mode auto-detect
+ * feature) and to detect a `{{` collision in fresh input. */
+const TOKEN_PATTERN = /\{\{[A-Z0-9_]+\}\}|<<[A-Z0-9_]+>>/g
 
 function initialState() {
   return {
@@ -29,11 +30,14 @@ function initialState() {
     mapping: new Map(),
     reverse: new Map(),
     counters: {},
-    // Not part of SPEC.md's session data shape verbatim, but the natural place to hold the
-    // de-identify pipeline's latest result: it's produced by the same action (RUN_RESULT) that
-    // updates the mapping, so both land in one dispatch rather than several separate setState
-    // calls racing each other across renders.
-    output: '',
+    // 'curly' ({{TYPE_N}}) unless the user has accepted the collision offer for input that
+    // already contains `{{` — SPEC.md's token-delimiter-collision decision.
+    delimiter: 'curly',
+    // Not part of SPEC.md's session data shape verbatim: the exact text the current `matches`
+    // were detected against. Keeping it lets `output` be derived (matchedText, matches,
+    // mapping) rather than stored, so toggling or renaming a mapping row re-splices the
+    // existing matches into that same text instantly, without re-running detection.
+    matchedText: '',
     matches: [],
   }
 }
@@ -59,12 +63,32 @@ function reducer(state, action) {
       }
     case 'SET_CUSTOM_TERMS':
       return { ...state, customTerms: action.terms }
+    case 'SET_DELIMITER':
+      return { ...state, delimiter: action.delimiter }
     case 'SET_MAPPING_ENTRY': {
       const mapping = new Map(state.mapping)
       const existing = mapping.get(action.original)
       if (!existing) return state
       mapping.set(action.original, { ...existing, ...action.patch })
       return { ...state, mapping }
+    }
+    case 'RENAME_TOKEN': {
+      const entry = state.mapping.get(action.original)
+      if (!entry) return state
+      const newToken = `${action.open}${action.name}${action.close}`
+      if (newToken === entry.token) return state
+      // Reject a collision with a different entry's token — the caller (MappingTable) is
+      // expected to have already checked this and shown its own error, but the reducer stays
+      // safe on its own rather than trusting the caller.
+      for (const other of state.mapping.values()) {
+        if (other !== entry && other.token === newToken) return state
+      }
+      const mapping = new Map(state.mapping)
+      mapping.set(action.original, { ...entry, token: newToken })
+      const reverse = new Map(state.reverse)
+      reverse.delete(entry.token)
+      reverse.set(newToken, action.original)
+      return { ...state, mapping, reverse }
     }
     case 'RUN_RESULT':
       return {
@@ -73,7 +97,7 @@ function reducer(state, action) {
         reverse: action.reverse,
         counters: action.counters,
         matches: action.matches,
-        output: action.output,
+        matchedText: action.matchedText,
       }
     case 'PURGE':
       return initialState()
@@ -121,10 +145,10 @@ export function useSession() {
 
   const overThreshold = byteSize(state.input) > LIVE_REDACTION_THRESHOLD_BYTES
 
-  // tokenise needs the mapping/reverse/counters as they stood before this run, but must not
-  // itself be a reactive dependency of the effect below — depending on it would mean the
-  // effect re-runs on the very state update it just produced. A ref sidesteps that: it always
-  // holds the latest state without being part of any dependency array.
+  // tokenise needs the mapping/reverse/counters/delimiter as they stood before this run, but
+  // must not itself be a reactive dependency of the effect below — depending on it would mean
+  // the effect re-runs on the very state update it just produced. A ref sidesteps that: it
+  // always holds the latest state without being part of any dependency array.
   const stateRef = useRef(state)
   useEffect(() => {
     stateRef.current = state
@@ -133,15 +157,8 @@ export function useSession() {
   const runPipeline = useCallback(
     (text) => {
       const resolved = resolveOverlaps(detect(text, enabledRules))
-      const { mapping, reverse, counters } = tokenise(resolved, stateRef.current)
-      dispatch({
-        type: 'RUN_RESULT',
-        mapping,
-        reverse,
-        counters,
-        matches: resolved,
-        output: redact(text, resolved, mapping),
-      })
+      const { mapping, reverse, counters } = tokenise(resolved, stateRef.current, stateRef.current.delimiter)
+      dispatch({ type: 'RUN_RESULT', mapping, reverse, counters, matches: resolved, matchedText: text })
     },
     [enabledRules],
   )
@@ -157,6 +174,14 @@ export function useSession() {
   // whatever text is in the box right now.
   const requestScrub = useCallback(() => runPipeline(state.input), [runPipeline, state.input])
 
+  // The redacted text is derived, not stored: re-splicing `state.matches` into `state.matchedText`
+  // with the current `state.mapping` picks up a row's enabled toggle or a token rename
+  // instantly, with no need to re-run detection over text that hasn't changed.
+  const output = useMemo(
+    () => redact(state.matchedText, state.matches, state.mapping),
+    [state.matchedText, state.matches, state.mapping],
+  )
+
   // Re-hydration is cheap regardless of size, so it just runs live off the debounced input —
   // no threshold, no dispatch (it doesn't grow the mapping, only reads it).
   const rehydrated = useMemo(() => {
@@ -164,19 +189,17 @@ export function useSession() {
     return rehydrate(debouncedInput, state.reverse)
   }, [debouncedInput, state.mode, state.reverse])
 
-  // Round-trip self-check (SPEC.md feature 13): after a redaction, rehydrating the output
-  // should reproduce exactly the text that was redacted. This can only actually fail once a
-  // token can be renamed (a later stage), but the check runs from the first redaction onward.
-  // Gated on `matches.length > 0`: with nothing redacted this run, output is just a passthrough
-  // of the input, and if that input happens to already contain `{{...}}`-shaped text (a
-  // template file, or model output pasted into the wrong pane), rehydrating it would "restore"
-  // text the redaction never touched and report a false failure — see the token-delimiter
-  // collision this app doesn't yet detect (SPEC.md, deferred to a later stage).
+  // Round-trip self-check (SPEC.md feature 13): rehydrating the output should reproduce
+  // exactly the text it was redacted from. Gated on `matches.length > 0`: with nothing
+  // redacted, output is just a passthrough of the input, and if that input happens to already
+  // contain token-shaped text (a template file, or model output pasted into the wrong pane),
+  // rehydrating it would "restore" text the redaction never touched and report a false
+  // failure.
   const roundTrip = useMemo(() => {
     if (state.mode !== 'deidentify' || state.matches.length === 0) return { ok: true, unknownTokens: [] }
-    const result = rehydrate(state.output, state.reverse)
-    return { ok: result.text === debouncedInput, unknownTokens: result.unknownTokens }
-  }, [state.output, state.matches, state.reverse, state.mode, debouncedInput])
+    const result = rehydrate(output, state.reverse)
+    return { ok: result.text === state.matchedText, unknownTokens: result.unknownTokens }
+  }, [output, state.matches, state.reverse, state.mode, state.matchedText])
 
   // Mode auto-detect (SPEC.md feature 12): de-identify mode has been given text that contains
   // a token this session already minted — very likely a model's reply pasted into the wrong
@@ -187,16 +210,23 @@ export function useSession() {
     return found ? found.some((token) => state.reverse.has(token)) : false
   }, [state.input, state.mode, state.reverse])
 
+  // Token-delimiter collision (SPEC.md's decisions table): de-identify input already contains
+  // `{{`, and the session hasn't already switched to the angle-bracket delimiter — offer the
+  // switch rather than producing curly tokens indistinguishable from the input's own braces.
+  const bracesCollision =
+    state.mode === 'deidentify' && state.delimiter === 'curly' && state.input.includes('{{')
+
   return {
     state,
     dispatch,
     enabledRules,
     overThreshold,
     requestScrub,
-    output: state.mode === 'deidentify' ? state.output : rehydrated.text,
+    output: state.mode === 'deidentify' ? output : rehydrated.text,
     matches: state.matches,
     unknownTokens: state.mode === 'rehydrate' ? rehydrated.unknownTokens : roundTrip.unknownTokens,
     roundTripFailed: state.mode === 'deidentify' && !roundTrip.ok,
     looksLikeModelOutput,
+    bracesCollision,
   }
 }

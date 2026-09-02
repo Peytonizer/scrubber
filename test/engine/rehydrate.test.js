@@ -39,6 +39,20 @@ describe('rehydrate', () => {
     const { text } = rehydrate('host `{{IP_ADDR_1}}` responded', reverse)
     expect(text).toBe('host `203.0.113.7` responded')
   })
+
+  it('restores a <<TYPE_N>> token — the collision escape hatch — just as tolerantly', () => {
+    const reverse = new Map([['<<IP_ADDR_1>>', '203.0.113.7']])
+    const { text, unknownTokens } = rehydrate('host << IP_ADDR_1 >> responded', reverse)
+    expect(text).toBe('host 203.0.113.7 responded')
+    expect(unknownTokens).toEqual([])
+  })
+
+  it('does not cross-match a curly token against an angle-style reverse entry', () => {
+    const reverse = new Map([['<<IP_ADDR_1>>', '203.0.113.7']])
+    const { text, unknownTokens } = rehydrate('host {{IP_ADDR_1}} responded', reverse)
+    expect(text).toBe('host {{IP_ADDR_1}} responded')
+    expect(unknownTokens).toEqual(['{{IP_ADDR_1}}'])
+  })
 })
 
 describe('round trip', () => {

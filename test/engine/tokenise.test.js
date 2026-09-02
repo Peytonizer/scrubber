@@ -78,4 +78,22 @@ describe('tokenise', () => {
     const run2 = tokenise([match({ value: '203.0.113.7' })], run1)
     expect(run2.mapping.get('203.0.113.7').enabled).toBe(false)
   })
+
+  it('allocates <<TYPE_N>> tokens when the angle delimiter is requested', () => {
+    const { mapping, reverse } = tokenise([match({ value: '203.0.113.7' })], emptySession(), 'angle')
+    expect(mapping.get('203.0.113.7').token).toBe('<<IP_ADDR_1>>')
+    expect(reverse.get('<<IP_ADDR_1>>')).toBe('203.0.113.7')
+  })
+
+  it('leaves an entry already minted under one delimiter alone when the other is requested later', () => {
+    const session1 = emptySession()
+    const run1 = tokenise([match({ value: '203.0.113.7' })], session1, 'curly')
+    const run2 = tokenise(
+      [match({ value: '203.0.113.7' }), match({ value: '198.51.100.2' })],
+      run1,
+      'angle',
+    )
+    expect(run2.mapping.get('203.0.113.7').token).toBe('{{IP_ADDR_1}}') // unchanged
+    expect(run2.mapping.get('198.51.100.2').token).toBe('<<IP_ADDR_2>>') // new, angle style
+  })
 })
