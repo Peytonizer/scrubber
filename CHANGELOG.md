@@ -92,3 +92,13 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   by scheme) and confirming zero non-inlined network requests, correct font rendering, and a
   full working de-identify/re-hydrate round trip with the mapping table, stats and drawer all
   functioning identically to the normal build. No console errors.
+- Deploy: `.github/workflows/deploy.yml` builds, runs the test suite (a push to `main` is now
+  a deploy, so it never publishes a build whose own tests fail), builds the `dist` site, copies
+  `CNAME` into it, and publishes via the standard `actions/deploy-pages` flow. Enabled Pages on
+  the repo (`build_type: workflow`, via the API) so this workflow has somewhere to deploy to.
+  The `scrubber.noradz.io` DNS record still needs setting up at the domain registrar — a
+  one-time interactive step outside what this session can do — so the site will build and
+  deploy correctly but only be reachable at the default `peytonizer.github.io/scrubber/` URL
+  until that record exists and GitHub's certificate provisioning picks it up.
+  Confirmed LICENSE (MIT, "Peytonizer") was already in place from stage 1.
+  This is the last of SPEC.md's nine build-order stages — v1 is feature-complete.
