@@ -36,3 +36,15 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   and a full round-trip test: redact it, rehydrate the result, assert the output is the
   original byte-for-byte. The engine (stages 2-4) is now complete and self-verifying end to
   end; the UI is next.
+- Dual-pane UI: the app is now usable end to end. `useSession.js` is the single session store
+  (mode, input, toggles, mapping) and drives the live pipeline — debounced 150ms, gated off
+  above 200 KB in favour of a manual Scrub button. `ModeToggle` now lives in the header
+  alongside the status-dot grid, which lights up for real once the mapping holds something.
+  `InputPane`/`OutputPane` give the explicit empty state ("No sensitive values found") instead
+  of ambiguous unchanged output, a Copy button, and the round-trip self-check and mode
+  auto-detect banners from SPEC.md's feature list. Verified in a real browser against a
+  production build: live redaction, deterministic token reuse across repeated values,
+  re-hydration (including the tolerant-whitespace and unknown-token cases), and the mode
+  toggle — no console errors. One bug found and fixed by that manual testing: the round-trip
+  check was comparing against unrelated `{{…}}`-shaped text already sitting in the input when
+  nothing was actually redacted that run, so it's now gated on `matches.length > 0`.
