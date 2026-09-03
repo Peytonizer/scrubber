@@ -25,8 +25,14 @@ export default {
           DEFAULT: '#ededed',
           muted: '#9a9aa0',
           dim: '#8a8a90',
-          faint: '#6a6a70',
-          faintest: '#4a4a50',
+          // `faint` and `faintest` are brightened from the noradz spec's `#6a6a70` / `#4a4a50`
+          // (3.7:1 and 2.2:1 against `bg`, both below WCAG AA's 4.5:1 for normal text). These
+          // tokens carry section labels, table headers and placeholder text that get read
+          // constantly, so a deliberate divergence from the canonical values here — brought up
+          // by Matt after finding the live site hard to read. `faint` now clears AA (4.7:1);
+          // `faintest` stays the dimmest tier by design but is no longer near-invisible (3.2:1).
+          faint: '#7d7d84',
+          faintest: '#626268',
         },
         accent: {
           DEFAULT: '#d1293d',
