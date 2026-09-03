@@ -5,6 +5,10 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
 
 ## Unreleased
 
+## 1.0.0 — 2026-09-03
+
+v1, feature-complete per `SPEC.md` and live at `scrubber.noradz.io`.
+
 - Brightened `text-faint` and `text-faintest` (section labels, table headers, placeholder and
   footer copy) so both clear a readable contrast ratio against the near-black background — the
   noradz spec's original values sat at 3.7:1 and 2.2:1, below WCAG AA's 4.5:1 for normal text.

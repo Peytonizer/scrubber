@@ -1,6 +1,6 @@
 # Scrubber
 
-**[scrubber.noradz.io](https://scrubber.noradz.io)** — not yet live; see Status below.
+**[scrubber.noradz.io](https://scrubber.noradz.io)**
 
 Redact secrets out of text before you paste it into an LLM — then paste the reply back and
 get your real values returned.
@@ -90,4 +90,4 @@ MIT. See `LICENSE`. Fork it, audit it, host it yourself — that's rather the po
 
 ## Status
 
-Early. See `CHANGELOG.md` for what has landed.
+1.0.0 — v1 feature-complete. See `CHANGELOG.md` for what has landed.
