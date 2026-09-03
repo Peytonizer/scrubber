@@ -74,6 +74,10 @@ even the favicon) is inlined directly into the one HTML file rather than loaded 
 same-origin resource. `connect-src 'none'` — the directive that actually enforces the
 no-network guarantee — is exactly the same in both builds.
 
+You don't need to build it yourself — the same file is published alongside the live site at
+[scrubber.noradz.io/scrubber.html](https://scrubber.noradz.io/scrubber.html); right-click →
+Save As to download it.
+
 ## Design
 
 Scrubber uses the [noradz](https://noradz.io) "Signal" theme — near-black surfaces, a single

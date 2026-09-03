@@ -128,3 +128,7 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   rule fixtures, and a rejection case per checksummed rule). Verified in a real browser: all
   five redact correctly, round-trip through re-hydrate correctly, and show up in the mapping
   table and PII stat badge with no console errors.
+- The deploy workflow now also runs `npm run build:single` and copies the result into `dist/`
+  as `scrubber.html`, so the single-file build is downloadable straight from the live site
+  (`scrubber.noradz.io/scrubber.html`) instead of requiring a local build. `dist-single/` stays
+  gitignored — nothing extra is committed to the repo; only the workflow gained a step.

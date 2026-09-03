@@ -3,8 +3,8 @@
 #
 # Uses the modern "deploy from a workflow" Pages method (actions/deploy-pages), not a gh-pages
 # branch, so the repo's Settings -> Pages -> Source must be "GitHub Actions". The `dist` build
-# — not the single-file build — is what's served; dist-single/scrubber.html stays a downloadable
-# artifact people build locally, not something this site hosts.
+# is the site; the single-file build is also copied in alongside it so scrubber.html is
+# downloadable straight from the live site, at <pages-url>/scrubber.html.
 name: Deploy to GitHub Pages
 
 on:
@@ -35,9 +35,11 @@ jobs:
       # A push to main deploys — never publish a build whose own test suite doesn't pass.
       - run: npm test
       - run: npm run build
+      - run: npm run build:single
       # The Vite build doesn't know about CNAME (it's not under public/); Pages needs it
       # alongside index.html in the published artifact to serve the custom domain.
       - run: cp CNAME dist/CNAME
+      - run: cp dist-single/scrubber.html dist/scrubber.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
