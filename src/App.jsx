@@ -5,6 +5,7 @@ import InputPane from './components/InputPane'
 import MappingTable from './components/MappingTable'
 import OutputPane from './components/OutputPane'
 import RuleDrawer from './components/RuleDrawer'
+import SecurityNote from './components/SecurityNote'
 import StatsBadges from './components/StatsBadges'
 import { useSession } from './state/useSession.js'
 
@@ -81,6 +82,8 @@ function App() {
       />
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 px-8 py-8 max-[900px]:px-8 min-[901px]:px-[72px]">
+        <SecurityNote />
+
         {showAutoDetect && (
           <div className="flex items-center justify-between gap-4 rounded border border-accent/40 bg-surface px-4 py-3 font-mono text-[12px] text-text-dim">
             <span>This looks like model output — switch to re-hydrate?</span>

@@ -102,3 +102,10 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   until that record exists and GitHub's certificate provisioning picks it up.
   Confirmed LICENSE (MIT, "Peytonizer") was already in place from stage 1.
   This is the last of SPEC.md's nine build-order stages — v1 is feature-complete.
+- Live at `scrubber.noradz.io` — the DNS record now resolves and GitHub's certificate is
+  approved.
+- Added `SecurityNote`: states the privacy guarantee on the page itself (not only the README),
+  expanded by default above the panes, pointing at the mechanism behind each claim — the CSP's
+  `connect-src 'none'`, no CDN, no persistence — rather than just asserting it. Collapses to
+  one line; there's nowhere to remember that choice (by design), so it opens the same way
+  every reload.
