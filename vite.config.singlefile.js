@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
+import { getCommitSha } from './vite.commit-sha.js'
 
 /**
  * Second build target (SPEC.md build order, stage 8): produces `dist-single/scrubber.html`, a
@@ -55,6 +56,12 @@ export default defineConfig({
   // The favicon is inlined as a data URI above, and nothing else references a public/ file, so
   // there is nothing left to copy — `publicDir: false` keeps this build to genuinely one file.
   publicDir: false,
+  // Stamps the build's commit SHA into the footer link — see vite.commit-sha.js. A single-file
+  // build is typically built locally from a checkout rather than in CI, so this is the same
+  // "read the SHA from whatever commit is currently checked out" logic as the normal build.
+  define: {
+    'import.meta.env.VITE_COMMIT_SHA': JSON.stringify(getCommitSha()),
+  },
   build: {
     outDir: 'dist-single',
   },

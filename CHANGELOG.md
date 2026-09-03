@@ -109,3 +109,12 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   `connect-src 'none'`, no CDN, no persistence — rather than just asserting it. Collapses to
   one line; there's nowhere to remember that choice (by design), so it opens the same way
   every reload.
+- Source-to-deploy provenance: both build targets now stamp the current commit SHA in at build
+  time (`vite.commit-sha.js`, shared by `vite.config.js` and `vite.config.singlefile.js`) and
+  the footer links to it on GitHub — `built from commit 2491ce7`, say. It's the one outbound
+  link the app ships, so it opens in a new tab rather than navigating the current one away,
+  since the mapping table lives only in this tab's memory and a footer click should never risk
+  it. Lets a sceptical user confirm the page they're looking at was actually built from the
+  source they audited, closing the last link in the README's "read the CSP line, watch the
+  Network tab" verifiability story. Verified in a real browser against a production build: the
+  link renders and points at the right commit, no console errors, no CSP violations.
