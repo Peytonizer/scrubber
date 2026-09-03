@@ -27,7 +27,15 @@
  *   }
  */
 
-import { isIPv4, isIPv6, luhn, shannonEntropy } from './heuristics.js'
+import {
+  isIPv4,
+  isIPv6,
+  isValidAbn,
+  isValidMedicare,
+  isValidTfn,
+  luhn,
+  shannonEntropy,
+} from './heuristics.js'
 
 export const rules = [
   // ---------- A. Cloud ----------
@@ -499,6 +507,84 @@ export const rules = [
     // Australian local formats; other locales are an IDEAS.md entry, not a v1 gap to paper
     // over.
     pattern: /\b(?:0[2-478]|\(0[2-478]\))\s?\d{4}\s?\d{4}\b/g,
+  },
+  {
+    id: 'tfn',
+    category: 'pii',
+    label: 'Tax File Number (AU)',
+    tokenType: 'TFN',
+    priority: 80,
+    defaultEnabled: true,
+    noisy: false,
+    // 9 digits, optionally grouped 3-3-3. The weighted-modulus-11 checksum
+    // (heuristics.isValidTfn) is what keeps this from matching every 9-digit number in
+    // sight — about 1 in 11 random 9-digit strings pass by chance, the same order of
+    // false-positive risk `credit-card` accepts from Luhn. A 3-3-3 group can still be found
+    // *inside* a longer spaced-out digit run (e.g. the first three groups of an AU bank BSB +
+    // account written with spaces) — the checksum is what catches that, not the pattern.
+    pattern: /\b\d{3}[ ]?\d{3}[ ]?\d{3}\b/g,
+    validate: (value) => isValidTfn(value.replace(/ /g, '')),
+  },
+  {
+    id: 'medicare-number',
+    category: 'pii',
+    label: 'Medicare card number (AU)',
+    tokenType: 'MEDICARE',
+    priority: 80,
+    defaultEnabled: true,
+    noisy: false,
+    // 10 digits, printed 4-5-1: a 9-digit identification number (self-checksummed, weighted
+    // modulus 10 — heuristics.isValidMedicare) followed by the individual reference number.
+    pattern: /\b\d{4}[ ]?\d{5}[ ]?\d\b/g,
+    validate: (value) => isValidMedicare(value.replace(/ /g, '')),
+  },
+  {
+    id: 'abn',
+    category: 'pii',
+    label: 'Australian Business Number',
+    tokenType: 'ABN',
+    priority: 80,
+    defaultEnabled: true,
+    noisy: false,
+    // 11 digits, printed 2-3-3-3, weighted modulus 89 (heuristics.isValidAbn). A business
+    // identifier rather than a personal one, but AU-specific and common enough in invoices
+    // and config to belong alongside the personal identifiers here rather than a category of
+    // its own.
+    pattern: /\b\d{2}[ ]?\d{3}[ ]?\d{3}[ ]?\d{3}\b/g,
+    validate: (value) => isValidAbn(value.replace(/ /g, '')),
+  },
+  {
+    id: 'drivers-licence-au',
+    category: 'pii',
+    label: "Driver's licence number (AU)",
+    tokenType: 'DRIVERS_LICENCE',
+    priority: 90,
+    defaultEnabled: true,
+    noisy: false,
+    captureGroup: 1,
+    // Licence number formats vary by state (all-digit in most, alphanumeric in others) with no
+    // public checksum to validate against, so unlike tfn/medicare-number/abn this rule is
+    // contextual rather than shape-validated: it only fires next to "driver's licence" or a
+    // "licence/license number" label, the same trade-off gcp-project-id and kv-username make
+    // above. Deliberately doesn't fire on a bare "licence" (a software licence key would match
+    // constantly) — it needs either the "driver's" qualifier or the word "number" attached.
+    pattern:
+      /\b(?:driver'?s?\s*licen[cs]e(?:\s*(?:no\.?|number|#))?|licen[cs]e\s*(?:no\.?|number)|DL)\s*[:#]?\s*([A-Za-z0-9]{6,10})\b/gid,
+  },
+  {
+    id: 'passport-number',
+    category: 'pii',
+    label: 'Passport number',
+    tokenType: 'PASSPORT',
+    priority: 90,
+    defaultEnabled: true,
+    noisy: false,
+    captureGroup: 1,
+    // Contextual, like drivers-licence-au above — a bare "1-2 letters + digits" shape is too
+    // common (order numbers, part numbers) to redact without the word "passport" nearby. The
+    // captured value itself still requires digits (real passport numbers always have some),
+    // which is what keeps a word like "validity" sitting after "passport" from matching.
+    pattern: /\bpassport\s*(?:no\.?|number|#)?\s*[:#]?\s*([A-Za-z]{0,2}\d{6,8})\b/gid,
   },
 ]
 

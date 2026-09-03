@@ -196,6 +196,34 @@ const fixtures = {
     expectedValue: '0412345678',
     noMatch: 'call 12345 now',
   },
+  tfn: {
+    // 123 456 782 is the ATO's own published worked example for the checksum algorithm, not a
+    // real person's TFN — the fabricated-value rule in CLAUDE.md is satisfied the same way
+    // AKIAIOSFODNN7EXAMPLE is: it's a canonical test value, not a real credential.
+    match: 'TFN: 123 456 782 on file',
+    expectedValue: '123 456 782',
+    noMatch: 'TFN: 123 456 781 on file', // fails the checksum by one digit
+  },
+  'medicare-number': {
+    match: 'Medicare: 2123 45670 1',
+    expectedValue: '2123 45670 1',
+    noMatch: 'Medicare: 2123 45671 1', // check digit off by one
+  },
+  abn: {
+    match: 'ABN: 51 824 753 556',
+    expectedValue: '51 824 753 556',
+    noMatch: 'ABN: 51 824 753 557', // fails the checksum by one digit
+  },
+  'drivers-licence-au': {
+    match: "Driver's licence: 12345678",
+    expectedValue: '12345678',
+    noMatch: 'no licence reference here',
+  },
+  'passport-number': {
+    match: 'Passport number: N1234567',
+    expectedValue: 'N1234567',
+    noMatch: 'Passport validity is five years',
+  },
 }
 
 // connection-string is a `detect`-function rule that emits two differently-typed matches from
@@ -245,6 +273,21 @@ describe('validated rules reject a pattern match that fails the heuristic', () =
   it('high-entropy rejects a low-entropy string of the same length and charset', () => {
     const rule = rules.find((r) => r.id === 'high-entropy')
     expect(detect('secret: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', [rule])).toHaveLength(0)
+  })
+
+  it('tfn rejects a 9-digit number that fails the checksum', () => {
+    const rule = rules.find((r) => r.id === 'tfn')
+    expect(detect('TFN: 123 456 780 on file', [rule])).toHaveLength(0)
+  })
+
+  it('medicare-number rejects a 10-digit number with the wrong check digit', () => {
+    const rule = rules.find((r) => r.id === 'medicare-number')
+    expect(detect('Medicare: 2123 45679 1', [rule])).toHaveLength(0)
+  })
+
+  it('abn rejects an 11-digit number that fails the checksum', () => {
+    const rule = rules.find((r) => r.id === 'abn')
+    expect(detect('ABN: 51 824 753 550', [rule])).toHaveLength(0)
   })
 })
 

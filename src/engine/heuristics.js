@@ -72,6 +72,48 @@ export function luhn(digits) {
 }
 
 /**
+ * Weighted-checksum validators for three Australian government identifiers, in the same spirit
+ * as `luhn` above: each keeps its rule in rules.js from matching every digit string of the
+ * right length by checking it against the algorithm the issuing agency actually publishes (the
+ * ATO for TFN and ABN, Medicare for the card number), rather than shape alone. `digits` must
+ * already be digits-only in every case — strip spaces before calling these.
+ */
+
+/** Tax File Number: 9 digits, weighted modulus 11. */
+export function isValidTfn(digits) {
+  if (!/^\d{9}$/.test(digits)) return false
+  const weights = [1, 4, 3, 7, 5, 8, 6, 9, 10]
+  const sum = weights.reduce((total, w, i) => total + w * Number(digits[i]), 0)
+  return sum % 11 === 0
+}
+
+/**
+ * Medicare card number: 10 printed digits. The first 9 are an identification number whose 9th
+ * digit is a check digit over the first 8 (weighted modulus 10); the 10th is the individual
+ * reference number — a person's position on the card — and carries no checksum of its own, so
+ * it's accepted here unchecked.
+ */
+export function isValidMedicare(digits) {
+  if (!/^\d{10}$/.test(digits)) return false
+  const weights = [1, 3, 7, 9, 1, 3, 7, 9]
+  const sum = weights.reduce((total, w, i) => total + w * Number(digits[i]), 0)
+  return sum % 10 === Number(digits[8])
+}
+
+/**
+ * Australian Business Number: 11 digits. Subtract 1 from the first digit, then a weighted
+ * modulus 89 over all eleven.
+ */
+export function isValidAbn(digits) {
+  if (!/^\d{11}$/.test(digits)) return false
+  const weights = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
+  const adjusted = digits.split('').map(Number)
+  adjusted[0] -= 1
+  const sum = weights.reduce((total, w, i) => total + w * adjusted[i], 0)
+  return sum % 89 === 0
+}
+
+/**
  * Shannon entropy of `value`, in bits per character. The `high-entropy` rule uses this to tell
  * a likely secret (random-looking base64/hex) apart from ordinary words or repeated
  * characters, which length and charset alone can't do.

@@ -118,3 +118,13 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
   source they audited, closing the last link in the README's "read the CSP line, watch the
   Network tab" verifiability story. Verified in a real browser against a production build: the
   link renders and points at the right commit, no console errors, no CSP violations.
+- Five more PII rules: Australian Tax File Number, Medicare card number and ABN — each backed
+  by a real weighted-checksum validator transcribed from the issuing agency's own published
+  algorithm (`heuristics.isValidTfn`/`isValidMedicare`/`isValidAbn`, in the same spirit as
+  `luhn` for credit cards) — plus driver's licence and passport numbers, which have no public
+  checksum to validate against and so are contextual instead: they only fire next to a
+  recognisable label ("driver's licence", "licence number", "passport"), the same trade-off
+  `kv-username` and `gcp-project-id` already make. 22 new Vitest cases (checksum validators,
+  rule fixtures, and a rejection case per checksummed rule). Verified in a real browser: all
+  five redact correctly, round-trip through re-hydrate correctly, and show up in the mapping
+  table and PII stat badge with no console errors.

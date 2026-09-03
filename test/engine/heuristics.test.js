@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { isIPv4, isIPv6, luhn, shannonEntropy } from '../../src/engine/heuristics.js'
+import {
+  isIPv4,
+  isIPv6,
+  isValidAbn,
+  isValidMedicare,
+  isValidTfn,
+  luhn,
+  shannonEntropy,
+} from '../../src/engine/heuristics.js'
 
 describe('isIPv4', () => {
   it('accepts a valid dotted-quad address', () => {
@@ -40,6 +48,42 @@ describe('luhn', () => {
   })
   it('rejects a number that fails the checksum', () => {
     expect(luhn('1234567890123456')).toBe(false)
+  })
+})
+
+describe('isValidTfn', () => {
+  it('accepts the ATO published worked example (123 456 782)', () => {
+    expect(isValidTfn('123456782')).toBe(true)
+  })
+  it('rejects a checksum failure', () => {
+    expect(isValidTfn('123456781')).toBe(false)
+  })
+  it('rejects the wrong number of digits', () => {
+    expect(isValidTfn('12345678')).toBe(false)
+  })
+})
+
+describe('isValidMedicare', () => {
+  it('accepts a number with a correct check digit', () => {
+    expect(isValidMedicare('2123456701')).toBe(true)
+  })
+  it('rejects a wrong check digit', () => {
+    expect(isValidMedicare('2123456711')).toBe(false)
+  })
+  it('rejects the wrong number of digits', () => {
+    expect(isValidMedicare('212345670')).toBe(false)
+  })
+})
+
+describe('isValidAbn', () => {
+  it('accepts a well-known valid ABN (51 824 753 556)', () => {
+    expect(isValidAbn('51824753556')).toBe(true)
+  })
+  it('rejects a checksum failure', () => {
+    expect(isValidAbn('51824753557')).toBe(false)
+  })
+  it('rejects the wrong number of digits', () => {
+    expect(isValidAbn('5182475355')).toBe(false)
   })
 })
 

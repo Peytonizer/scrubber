@@ -36,7 +36,7 @@ The same value always gets the same placeholder, so the text stays coherent — 
 | Identity | Usernames in `/home/…`, `/Users/…` and `C:\Users\…` paths, `ssh user@host`, `user=` / `username:` config pairs, credentials inside connection strings |
 | Network | IPv4 and IPv6 addresses, MAC addresses, internal hostnames (`.local`, `.internal`, `.corp`, …) |
 | Secrets | Private key blocks, JWTs, Bearer tokens, GitHub / GitLab / Slack tokens, and generic high-entropy strings |
-| PII | Email addresses, phone numbers, credit card numbers (Luhn-checked) |
+| PII | Email addresses, phone numbers, credit card numbers (Luhn-checked); Australian Tax File Numbers, Medicare card numbers and ABNs (each checksum-validated against the issuing agency's own algorithm), plus driver's licence and passport numbers |
 
 Including, because it comes up more than you'd think, the API keys for LLMs themselves —
 `sk-ant-…` and `sk-…` keys are a very common passenger in a snippet someone is about to paste
