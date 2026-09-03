@@ -54,7 +54,7 @@ export default function MappingTable({ mapping, onToggleEnabled, onRename }) {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="m-0 font-mono text-[11px] uppercase tracking-[0.08em] text-text-faint">
+      <h2 className="m-0 font-mono text-[11px] uppercase tracking-[0.08em] text-text">
         Mapping {entries.length > 0 && `(${entries.length})`}
       </h2>
       {entries.length === 0 ? (
@@ -67,16 +67,16 @@ export default function MappingTable({ mapping, onToggleEnabled, onRename }) {
             <thead>
               <tr className="border-b border-border">
                 <th className="w-8" />
-                <th className="px-5 py-[14px] text-left text-[11px] font-normal uppercase tracking-[0.08em] text-text-faint">
+                <th className="px-5 py-[14px] text-left text-[11px] font-normal uppercase tracking-[0.08em] text-text">
                   Original
                 </th>
-                <th className="px-5 py-[14px] text-left text-[11px] font-normal uppercase tracking-[0.08em] text-text-faint">
+                <th className="px-5 py-[14px] text-left text-[11px] font-normal uppercase tracking-[0.08em] text-text">
                   Token
                 </th>
-                <th className="px-5 py-[14px] text-right text-[11px] font-normal uppercase tracking-[0.08em] text-text-faint">
+                <th className="px-5 py-[14px] text-right text-[11px] font-normal uppercase tracking-[0.08em] text-text">
                   Count
                 </th>
-                <th className="px-5 py-[14px] text-center text-[11px] font-normal uppercase tracking-[0.08em] text-text-faint">
+                <th className="px-5 py-[14px] text-center text-[11px] font-normal uppercase tracking-[0.08em] text-text">
                   On
                 </th>
               </tr>

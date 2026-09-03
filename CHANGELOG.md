@@ -8,6 +8,10 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
 - Brightened `text-faint` and `text-faintest` (section labels, table headers, placeholder and
   footer copy) so both clear a readable contrast ratio against the near-black background — the
   noradz spec's original values sat at 3.7:1 and 2.2:1, below WCAG AA's 4.5:1 for normal text.
+- Moved section headings (INPUT/REDACTED/MAPPING labels, table headers, rule-drawer category
+  labels, the security-note title) and the security note's bold lead-ins to full-white
+  `text-text`, on top of the `text-faint`/`text-faintest` brightening above — still too hard to
+  read at the dimmer tiers.
 - Project scaffolding: specification, backlog, README, changelog and `.gitignore`. No
   application code yet.
 - Adopted the noradz "Signal" theme (dark base, red accent, Space Grotesk + IBM Plex Mono),

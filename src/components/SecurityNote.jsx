@@ -20,7 +20,7 @@ export default function SecurityNote() {
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full items-center gap-2 text-left text-text-muted"
+        className="flex w-full items-center gap-2 text-left text-text"
       >
         <ShieldCheck size={14} strokeWidth={1.6} className="shrink-0 text-accent" />
         <span className="flex-1">Nothing you paste here ever leaves this page</span>
@@ -33,17 +33,17 @@ export default function SecurityNote() {
       {expanded && (
         <ul className="mt-3 flex flex-col gap-2 border-t border-border pt-3 text-text-faint">
           <li>
-            <span className="text-text-dim">No network calls, ever.</span> Enforced by this
+            <span className="text-text">No network calls, ever.</span> Enforced by this
             page's Content-Security-Policy (<code className="text-text-muted">connect-src
             'none'</code>), not just promised — open dev tools and watch the Network tab stay
             empty while you use it.
           </li>
           <li>
-            <span className="text-text-dim">No CDN.</span> Fonts, icons and code are bundled
+            <span className="text-text">No CDN.</span> Fonts, icons and code are bundled
             into this page at build time. There's nowhere else for it to load from.
           </li>
           <li>
-            <span className="text-text-dim">Nothing is stored.</span> No localStorage, no
+            <span className="text-text">Nothing is stored.</span> No localStorage, no
             cookies, no server. The mapping — the only record of what got redacted — lives in
             this tab's memory alone. Reload the page and it's gone for good.
           </li>

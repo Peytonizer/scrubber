@@ -31,7 +31,7 @@ export default function RuleDrawer({
         const categoryOn = categoryToggles[category] !== false
         return (
           <div key={category}>
-            <label className="mb-2 flex cursor-pointer items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-text-faint">
+            <label className="mb-2 flex cursor-pointer items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-text">
               <input
                 type="checkbox"
                 checked={categoryOn}
@@ -98,7 +98,7 @@ function CustomTermsField({ terms, onChange }) {
 
   return (
     <div>
-      <h3 className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-text-faint">
+      <h3 className="mb-2 font-mono text-[11px] uppercase tracking-[0.08em] text-text">
         Custom terms
       </h3>
       <input

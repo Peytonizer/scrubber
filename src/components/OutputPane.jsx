@@ -23,7 +23,7 @@ export default function OutputPane({ label, value, statusMessage, overThreshold,
   return (
     <section className="flex min-h-0 flex-1 flex-col">
       <div className="mb-2 flex items-baseline justify-between">
-        <h2 className="m-0 font-mono text-[11px] uppercase tracking-[0.08em] text-text-faint">
+        <h2 className="m-0 font-mono text-[11px] uppercase tracking-[0.08em] text-text">
           {label}
         </h2>
         <div className="flex items-center gap-3">
