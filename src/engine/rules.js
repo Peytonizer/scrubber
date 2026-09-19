@@ -34,6 +34,7 @@ import {
   isValidMedicare,
   isValidTfn,
   luhn,
+  publicFqdnPrefix,
   shannonEntropy,
 } from './heuristics.js'
 
@@ -320,6 +321,47 @@ export const rules = [
     // Domains under a suffix that only resolves inside a private network. Users can add more
     // suffixes as custom terms.
     pattern: /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:local|internal|corp|lan|intranet|home\.arpa)\b/gi,
+  },
+  {
+    id: 'public-fqdn',
+    category: 'network',
+    label: 'Public domain name',
+    tokenType: 'HOSTNAME',
+    // Below `email` and `internal-domain` (both 90) so those win a span they share, and well
+    // below `s3-vhost` (120). A `user@host` address starts earlier than the host, so `email`
+    // takes it whole regardless of priority.
+    priority: 85,
+    defaultEnabled: true,
+    // Any dotted name is a candidate, and even with the TLD allowlist it will occasionally
+    // catch code (`self.io`) or a macOS bundle (`Slack.app`). On by default under the
+    // over-redaction principle: a missed hostname often carries the company name.
+    noisy: true,
+    // A `detect` function because the regex finds a run of labels and `publicFqdnPrefix`
+    // decides how much of it is the domain (`example.com.conf` -> `example.com`), which a
+    // single pattern plus boolean `validate` can't express. The regex accepts any label
+    // shape, including a leading underscore (`_dmarc.example.com`) and a leading dot before
+    // the run (`*.example.com`, `.example.com`), and ends on an alphabetic label. It doesn't
+    // match IP addresses (the last label must be alphabetic) or names with a `-`/word
+    // character glued on either end (`foo-example.com` is still one name; `example.com-old`
+    // is not treated as a domain at all). It does not match internationalised (`xn--`) TLDs.
+    detect(text) {
+      const pattern =
+        /(?<![\w-])(?:[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?\.)+[a-z]{2,24}(?![\w-])/gi
+      const matches = []
+      for (const m of text.matchAll(pattern)) {
+        const value = publicFqdnPrefix(m[0])
+        if (!value) continue
+        matches.push({
+          ruleId: 'public-fqdn',
+          tokenType: 'HOSTNAME',
+          start: m.index,
+          end: m.index + value.length,
+          value,
+          priority: 85,
+        })
+      }
+      return matches
+    },
   },
 
   // ---------- D. Secrets ----------

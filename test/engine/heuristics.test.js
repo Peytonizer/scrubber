@@ -6,6 +6,7 @@ import {
   isValidMedicare,
   isValidTfn,
   luhn,
+  publicFqdnPrefix,
   shannonEntropy,
 } from '../../src/engine/heuristics.js'
 
@@ -93,5 +94,30 @@ describe('shannonEntropy', () => {
   })
   it('is high for a random-looking string', () => {
     expect(shannonEntropy('aB3xQ9zK7mN2pL5v')).toBeGreaterThan(3.5)
+  })
+})
+
+describe('publicFqdnPrefix', () => {
+  it('returns the whole candidate when it ends in an accepted TLD', () => {
+    expect(publicFqdnPrefix('api.example.com')).toBe('api.example.com')
+    expect(publicFqdnPrefix('www.example.com.au')).toBe('www.example.com.au')
+  })
+
+  it('strips trailing labels that are not a TLD, keeping the original case', () => {
+    expect(publicFqdnPrefix('Example.COM.conf')).toBe('Example.COM')
+    expect(publicFqdnPrefix('example.com.au.tar.gz')).toBe('example.com.au')
+  })
+
+  it('rejects candidates with no accepted TLD', () => {
+    expect(publicFqdnPrefix('main.py')).toBeNull()
+    expect(publicFqdnPrefix('os.path.join')).toBeNull()
+    expect(publicFqdnPrefix('user.id')).toBeNull()
+  })
+
+  it('rejects a bare public suffix, and does not strip below one', () => {
+    expect(publicFqdnPrefix('com.au')).toBeNull()
+    expect(publicFqdnPrefix('nsw.gov.au')).toBeNull()
+    expect(publicFqdnPrefix('nsw.gov.au.bak')).toBeNull()
+    expect(publicFqdnPrefix('health.nsw.gov.au')).toBe('health.nsw.gov.au')
   })
 })

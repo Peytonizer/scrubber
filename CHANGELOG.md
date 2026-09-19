@@ -5,6 +5,13 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
 
 ## Unreleased
 
+- Added a `public-fqdn` rule so public domain names (`api.example.com`, `www.example.com.au`)
+  are redacted as `HOSTNAME`; previously only private suffixes (`.internal`, `.corp`, …) were.
+  Matching is against a curated TLD allowlist that includes `.au` and its second levels, so
+  `main.py`, `README.md` and `user.id` aren't caught; a bare suffix like `com.au` is left
+  alone, and a trailing file extension is kept (`example.com.conf` → `HOSTNAME_1.conf`).
+  Marked noisy, on by default.
+
 ## 1.0.0 — 2026-09-03
 
 v1, feature-complete per `SPEC.md` and live at `scrubber.noradz.io`.

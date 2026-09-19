@@ -114,6 +114,11 @@ const fixtures = {
     expectedValue: 'db01.prod.internal',
     noMatch: 'connecting to example.com',
   },
+  'public-fqdn': {
+    match: 'curl https://api.example.com/v1/users',
+    expectedValue: 'api.example.com',
+    noMatch: 'edit main.py, package.json and README.md, then read user.name',
+  },
   'private-key-block': {
     match: '-----BEGIN PRIVATE KEY-----\nMIIExampleBase64Body==\n-----END PRIVATE KEY-----',
     expectedValue: '-----BEGIN PRIVATE KEY-----\nMIIExampleBase64Body==\n-----END PRIVATE KEY-----',
@@ -288,6 +293,66 @@ describe('validated rules reject a pattern match that fails the heuristic', () =
   it('abn rejects an 11-digit number that fails the checksum', () => {
     const rule = rules.find((r) => r.id === 'abn')
     expect(detect('ABN: 51 824 753 550', [rule])).toHaveLength(0)
+  })
+})
+
+describe('public-fqdn', () => {
+  const rule = rules.find((r) => r.id === 'public-fqdn')
+  const values = (text) => detect(text, [rule]).map((m) => m.value)
+
+  it('matches Australian second-level domains', () => {
+    expect(
+      values('example.com.au example.net.au example.org.au example.edu.au example.gov.au'),
+    ).toEqual([
+      'example.com.au',
+      'example.net.au',
+      'example.org.au',
+      'example.edu.au',
+      'example.gov.au',
+    ])
+    expect(values('portal.health.nsw.gov.au and www.example.id.au')).toEqual([
+      'portal.health.nsw.gov.au',
+      'www.example.id.au',
+    ])
+  })
+
+  it('matches other common suffixes and multi-level subdomains', () => {
+    expect(values('mail.example.co.uk db01.prod.eu-west-1.example.io shop.example.co.nz')).toEqual([
+      'mail.example.co.uk',
+      'db01.prod.eu-west-1.example.io',
+      'shop.example.co.nz',
+    ])
+  })
+
+  it('leaves a bare public suffix alone', () => {
+    expect(values('register a .com.au or nsw.gov.au name')).toEqual([])
+  })
+
+  it('redacts only the domain when a file extension follows it', () => {
+    expect(values('/etc/nginx/sites-available/example.com.conf')).toEqual(['example.com'])
+    expect(values('cert example.com.au.pem')).toEqual(['example.com.au'])
+  })
+
+  it('handles leading wildcards, underscores and case', () => {
+    expect(values('*.example.com _dmarc.Example.COM')).toEqual(['example.com', '_dmarc.Example.COM'])
+  })
+
+  it('takes only the host from a URL, and stops at a trailing sentence full stop', () => {
+    const [m] = detect('see https://www.example.com:8443/a/b?x=1.', [rule])
+    expect(m.value).toBe('www.example.com')
+    expect(values('Ping example.com.')).toEqual(['example.com'])
+  })
+
+  it('does not match file names, code, IP addresses or excluded TLDs', () => {
+    expect(
+      values('main.py build.sh app.js notes.md archive.zip os.path req.body user.id arr.at(0) 192.0.2.1 v1.2.3'),
+    ).toEqual([])
+  })
+
+  it('yields to an email address, which starts earlier and owns the whole span', () => {
+    const email = rules.find((r) => r.id === 'email')
+    const found = detect('alice@example.com.au', [email, rule])
+    expect(found.filter((m) => m.ruleId === 'email')).toHaveLength(1)
   })
 })
 

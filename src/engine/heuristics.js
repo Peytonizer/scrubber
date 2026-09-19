@@ -52,6 +52,70 @@ export function isIPv6(value) {
 }
 
 /**
+ * Top-level domains the `public-fqdn` rule will accept as the end of a hostname. A curated
+ * allowlist rather than "any alphabetic word", because `word.word` is also the shape of code
+ * (`user.name`, `os.path`, `req.body`) and of filenames (`main.py`, `README.md`), and IANA's
+ * list includes plenty of ordinary words. Deliberately left out, because they collide with
+ * something far more common than a domain in a pasted snippet:
+ *   - file extensions that are also ccTLDs: py sh md js rs pl cc so ml pm ps
+ *   - code idioms that are also ccTLDs: id (`user.id`), is, it, in, to (`tensor.to`), at
+ *     (`arr.at`), do, me, my, as, am
+ *   - gTLDs that are everyday property names: name, link, email, page, host, site, store,
+ *     live, one, group, network, services, space, world
+ * The cost is a missed domain on those TLDs; the `custom terms` field covers a known one.
+ */
+const PUBLIC_TLDS = new Set([
+  // generic
+  'com', 'net', 'org', 'edu', 'gov', 'mil', 'int', 'info', 'biz', 'io', 'co', 'ai', 'dev',
+  'app', 'cloud', 'xyz', 'online', 'tech',
+  // country codes: Australia and New Zealand first, then the ones most often seen in configs
+  'au', 'nz', 'uk', 'us', 'ca', 'de', 'fr', 'nl', 'se', 'dk', 'fi', 'no', 'ie', 'es', 'pt',
+  'be', 'ch', 'eu', 'jp', 'kr', 'cn', 'sg', 'hk', 'tw', 'za', 'br', 'mx', 'ru', 'ua', 'cz',
+  'gr', 'il', 'ae',
+])
+
+/**
+ * Registry-controlled second-level suffixes under the ccTLDs above: a name like `example.com.au`
+ * is a registrable domain, but `com.au` on its own is just the suffix and shouldn't be redacted
+ * (think "your .com.au domain"). The `au` entries are the full set of second levels
+ * (`com`, `net`, `org`, `edu`, `gov`, `asn`, `id`, `csiro`, `conf`, `oz`), the state-and-territory
+ * ones under `gov.au`/`edu.au`, and the bare state codes (`nsw.au`, …). Only used to reject a
+ * value that *is* a suffix; `au` itself is already in PUBLIC_TLDS, so any name below these is
+ * accepted without being listed individually.
+ */
+const PUBLIC_SUFFIXES = new Set([
+  ...['com', 'net', 'org', 'edu', 'gov', 'asn', 'id', 'csiro', 'conf', 'oz'].map((s) => `${s}.au`),
+  ...['nsw', 'vic', 'qld', 'wa', 'sa', 'tas', 'act', 'nt'].flatMap((state) => [
+    `${state}.au`,
+    `${state}.gov.au`,
+    `${state}.edu.au`,
+  ]),
+  'co.uk', 'org.uk', 'ac.uk', 'gov.uk', 'me.uk', 'ltd.uk', 'plc.uk', 'net.uk', 'sch.uk',
+  'co.nz', 'org.nz', 'net.nz', 'govt.nz', 'ac.nz', 'school.nz',
+])
+
+/**
+ * Given a run of dot-separated labels (`api.example.com.conf`), returns the longest leading
+ * part that is a public FQDN (`api.example.com`), or null if none is. Trailing labels that
+ * aren't a real TLD are stripped one at a time rather than rejecting the whole candidate,
+ * because a domain is very often followed by a file extension in a pasted snippet
+ * (`example.com.conf`, `example.com.pem`) and the domain in it is exactly what should go.
+ * A candidate that is, or strips down to, a bare suffix (`com.au`) yields null.
+ */
+export function publicFqdnPrefix(candidate) {
+  const labels = candidate.split('.')
+  for (let n = labels.length; n >= 2; n--) {
+    const head = labels.slice(0, n).join('.').toLowerCase()
+    const tld = head.slice(head.lastIndexOf('.') + 1)
+    // Stop at a bare suffix instead of stripping further: `nsw.gov.au.bak` shouldn't fall
+    // through to `nsw.gov`.
+    if (PUBLIC_SUFFIXES.has(head)) return null
+    if (PUBLIC_TLDS.has(tld)) return labels.slice(0, n).join('.')
+  }
+  return null
+}
+
+/**
  * Luhn checksum, used to keep the `credit-card` rule from firing on every 13-19 digit run
  * (order numbers, invoice IDs, phone numbers with punctuation stripped). `digits` must already
  * be digits-only — strip separators before calling this.

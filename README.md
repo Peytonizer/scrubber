@@ -34,7 +34,7 @@ The same value always gets the same placeholder, so the text stays coherent — 
 | --- | --- |
 | Cloud | AWS ARNs, account IDs, access keys, S3 buckets; Azure resource IDs, subscription and tenant GUIDs; GCP project IDs and service accounts |
 | Identity | Usernames in `/home/…`, `/Users/…` and `C:\Users\…` paths, `ssh user@host`, `user=` / `username:` config pairs, credentials inside connection strings |
-| Network | IPv4 and IPv6 addresses, MAC addresses, internal hostnames (`.local`, `.internal`, `.corp`, …) |
+| Network | IPv4 and IPv6 addresses, MAC addresses, internal hostnames (`.local`, `.internal`, `.corp`, …), and public domain names on common TLDs including Australian ones (`.com.au`, `.gov.au`, `.edu.au`, …). File names like `main.py` and code like `user.id` are left alone, at the cost of missing a domain on a TLD that doubles as a file extension (`.sh`, `.py`, `.md`, `.zip`) |
 | Secrets | Private key blocks, JWTs, Bearer tokens, GitHub / GitLab / Slack tokens, and generic high-entropy strings |
 | PII | Email addresses, phone numbers, credit card numbers (Luhn-checked); Australian Tax File Numbers, Medicare card numbers and ABNs (each checksum-validated against the issuing agency's own algorithm), plus driver's licence and passport numbers |
 
