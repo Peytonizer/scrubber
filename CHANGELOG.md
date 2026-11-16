@@ -5,6 +5,8 @@ headings are cut when a meaningful chunk of work lands, not on every commit.
 
 ## Unreleased
 
+## 1.1.0 — 2026-11-16
+
 - Added a `public-fqdn` rule so public domain names (`api.example.com`, `www.example.com.au`)
   are redacted as `HOSTNAME`; previously only private suffixes (`.internal`, `.corp`, …) were.
   Matching is against a curated TLD allowlist that includes `.au` and its second levels, so
